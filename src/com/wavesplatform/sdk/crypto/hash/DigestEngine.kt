@@ -165,15 +165,15 @@ abstract class DigestEngine : Digest {
      */
     override fun digest(buf: ByteArray, offset: Int, len: Int): Int {
         adjustDigestLen()
-        if (len >= digestLen) {
+        return if (len >= digestLen) {
             doPadding(buf, offset)
             reset()
-            return digestLen
+            digestLen
         } else {
             doPadding(outputBuf, 0)
             System.arraycopy(outputBuf!!, 0, buf, offset, len)
             reset()
-            return len
+            len
         }
     }
 

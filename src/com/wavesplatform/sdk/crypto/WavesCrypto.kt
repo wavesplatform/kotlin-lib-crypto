@@ -1,7 +1,8 @@
 package com.wavesplatform.sdk.crypto
 
-import org.apache.commons.codec.binary.Base64
 import java.util.*
+import org.apache.commons.codec.binary.Base64
+
 
 typealias Bytes = ByteArray
 typealias PublicKey = String
@@ -151,12 +152,12 @@ interface WavesCrypto {
     /**
      *
      */
-    fun aesEncrypt(data: String, secret: String): String
+    fun aesEncrypt(data: String?, secret: String?): String
 
     /**
      *
      */
-    fun aesDecrypt(encryptedData: String, secret: String): String
+    fun aesDecrypt(encryptedData: String?, secret: String?): String
 
     companion object : WavesCrypto {
 
@@ -169,16 +170,17 @@ interface WavesCrypto {
         const val HASH_LENGTH = 20
         const val ADDRESS_LENGTH = 1 + 1 + CHECK_SUM_LENGTH + HASH_LENGTH
 
-        const val MAIN_NET_CHAIN_ID: Byte = 87
-        const val TEST_NET_CHAIN_ID: Byte = 84
+        const val MAIN_NET_CHAIN_ID: Byte = 87  // W
+        const val TEST_NET_CHAIN_ID: Byte = 84  // T
+        const val STAGE_NET_CHAIN_ID: Byte = 83 // S
 
         fun addressFromPublicKey(publicKey: ByteArray, scheme: Byte = MAIN_NET_CHAIN_ID)
                 : String {
             return try {
-                val publicKeyHash = Hash.keccak(publicKey).copyOf(HASH_LENGTH)
+                val publicKeyHash = keccak(publicKey).copyOf(HASH_LENGTH)
                 val withoutChecksum = com.google.common.primitives.Bytes.concat(
-                    byteArrayOf(ADDRESS_VERSION, scheme),
-                    publicKeyHash)
+                        byteArrayOf(ADDRESS_VERSION, scheme),
+                        publicKeyHash)
                 Base58.encode(com.google.common.primitives.Bytes.concat(withoutChecksum, calcCheckSum(withoutChecksum)))
             } catch (e: Exception) {
                 "Unknown address"
@@ -186,7 +188,7 @@ interface WavesCrypto {
         }
 
         fun calcCheckSum(bytes: ByteArray): ByteArray {
-            return Arrays.copyOfRange(Hash.keccak(bytes), 0, CHECK_SUM_LENGTH)
+            return Hash.keccak(bytes).copyOfRange(0, CHECK_SUM_LENGTH)
         }
 
         override fun blake2b(input: Bytes): Bytes {
@@ -296,7 +298,7 @@ interface WavesCrypto {
             return try {
                 if (bytes.size == ADDRESS_LENGTH
                         && bytes[0] == ADDRESS_VERSION) {
-                    val checkSum = Arrays.copyOfRange(bytes, bytes.size - CHECK_SUM_LENGTH, bytes.size)
+                    val checkSum = bytes.copyOfRange(bytes.size - CHECK_SUM_LENGTH, bytes.size)
                     val checkSumGenerated = calcCheckSum(bytes.copyOf(bytes.size - CHECK_SUM_LENGTH))
                     Arrays.equals(checkSum, checkSumGenerated)
                 } else {
@@ -307,11 +309,11 @@ interface WavesCrypto {
             }
         }
 
-        override fun aesEncrypt(data: String, secret: String) : String {
+        override fun aesEncrypt(data: String?, secret: String?): String {
             return AESUtil.encrypt(data, secret)
         }
 
-        override fun aesDecrypt(encryptedData: String, secret: String): String {
+        override fun aesDecrypt(encryptedData: String?, secret: String?): String {
             return AESUtil.decrypt(encryptedData, secret)
         }
     }
